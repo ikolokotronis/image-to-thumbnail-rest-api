@@ -18,10 +18,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 
+from image_to_thumbnail_rest_api.images.views import ExpiringImageAccess
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("images/", include("images.urls")),
     path("users/", include("users.urls")),
+    path(
+        "media/expiring-images/<str:file_name>",
+        ExpiringImageAccess.as_view(),
+        name="expiring-image-view",
+    ),
 ]
 
 if settings.DEBUG:

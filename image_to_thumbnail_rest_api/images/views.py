@@ -1,6 +1,8 @@
 import os
+from datetime import datetime
 from typing import Callable
 
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -177,3 +179,42 @@ class ImageView(APIView):
             with PILImage.open(original_image_path) as image:
                 return self.options.get(user.tier.name, self.image_processor.default_tier_processing)(request, image_instance, image)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ExpiringImageView(APIView):
+    """
+    Expiring image view.
+    Anyone can access the image, if it exists, and it's not expired.
+    """
+
+    def __handle_image_is_expired(self, image: ExpiringImage) -> bool:
+        """
+        If image has expired, return true.
+        """
+        current_time_in_seconds = int(datetime.now().timestamp())
+        image_creation_time = int(image.created_at.timestamp())
+        if current_time_in_seconds - image_creation_time > int(image.live_time):
+            return True
+        return False
+
+    def __handle_open_file(self, file_path: str) -> HttpResponse | Response:
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                image_data = f.read()
+                return HttpResponse(image_data, content_type="image/jpeg")
+        return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request: Request, file_name: str) -> Response | Callable:
+        try:
+            image = ExpiringImage.objects.get(image=f"expiring-images/{file_name}")
+        except ObjectDoesNotExist:
+            return Response(
+                {"error": "Image does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
+        if self.__handle_image_is_expired(image):
+            image.delete()
+            return Response(
+                {"error": "Image has expired"}, status=status.HTTP_404_NOT_FOUND
+            )
+        file_path = os.path.join(os.path.dirname(image.image.path), file_name)
+        return self.__handle_open_file(file_path)
