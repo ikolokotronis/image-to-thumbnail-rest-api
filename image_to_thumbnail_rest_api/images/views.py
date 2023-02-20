@@ -2,7 +2,7 @@ import os
 from typing import Callable
 
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -135,8 +135,8 @@ class ImageProcessor:
 
 
 class ImageView(APIView):
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -161,7 +161,7 @@ class ImageView(APIView):
         """
         Calls the appropriate tier processing method and returns the response.
         """
-        user = request.user
+        user = User.objects.first()
         image_instance = Image(user=user)
         serializer = ImageSerializer(image_instance, data=request.data)
         if serializer.is_valid():
