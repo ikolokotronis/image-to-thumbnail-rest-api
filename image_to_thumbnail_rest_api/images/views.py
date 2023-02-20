@@ -4,7 +4,7 @@ from typing import Callable
 
 from django.http import HttpResponse
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -187,7 +187,7 @@ class ExpiringImageView(APIView):
     Anyone can access the image, if it exists, and it's not expired.
     """
 
-    def __handle_image_is_expired(self, image: ExpiringImage) -> bool:
+    def __image_has_expired(self, image: ExpiringImage) -> bool:
         """
         If image has expired, return true.
         """
@@ -211,7 +211,7 @@ class ExpiringImageView(APIView):
             return Response(
                 {"error": "Image does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
-        if self.__handle_image_is_expired(image):
+        if self.__image_has_expired(image):
             image.delete()
             return Response(
                 {"error": "Image has expired"}, status=status.HTTP_404_NOT_FOUND
