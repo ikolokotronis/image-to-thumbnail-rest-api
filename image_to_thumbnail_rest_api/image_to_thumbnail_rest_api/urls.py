@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 
-from image_to_thumbnail_rest_api.images.views import ExpiringImageView
+from images.views import ExpiringImageView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
