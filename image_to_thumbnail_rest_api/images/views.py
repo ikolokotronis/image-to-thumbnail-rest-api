@@ -182,10 +182,6 @@ class ImageView(APIView):
 
 
 class ExpiringImageView(APIView):
-    """
-    Expiring image view.
-    Anyone can access the image, if it exists, and it's not expired.
-    """
 
     def __image_has_expired(self, image: ExpiringImage) -> bool:
         """
@@ -197,7 +193,7 @@ class ExpiringImageView(APIView):
             return True
         return False
 
-    def __handle_open_file(self, file_path: str) -> HttpResponse | Response:
+    def __open_image(self, file_path: str) -> HttpResponse | Response:
         if os.path.exists(file_path):
             with open(file_path, "rb") as f:
                 image_data = f.read()
@@ -217,4 +213,4 @@ class ExpiringImageView(APIView):
                 {"error": "Image has expired"}, status=status.HTTP_404_NOT_FOUND
             )
         file_path = os.path.join(os.path.dirname(image.image.path), file_name)
-        return self.__handle_open_file(file_path)
+        return self.__open_image(file_path)
