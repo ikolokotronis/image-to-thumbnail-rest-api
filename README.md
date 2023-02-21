@@ -59,14 +59,42 @@ Request body example:
 }
 ```
 
-After receiving response, copy the <b>csrftoken</b> cookie from response headers and include that in your request headers as a value for <b>X-CSRFToken</b> field.
+After receiving response, copy the value of <b>csrftoken</b> cookie from response headers and include that in your request headers as a value for <b>X-CSRFToken</b> field.
 
+### Uploading images
+`POST /images/`
+<br/>
+<br/>
+Uploading images require a `original_image` field to be included in the body.  As a value, it expects an image file in png or jpg format.  
+Any other values will be rejected.  
+If user's tier plan comes with ability to fetch expiring links, there shoud also be a `live_time` field in the body, 
+determining the amount of seconds the link will be available before it expires. Number range should be between `300` and `30000`.  
+  
+Request body example (assuming user tier is Enterprise):
+
+```
+{
+  "original_image": test.jpg,
+  "live_time": "500"
+}
+```
+Response differs depending on which tier user currently has.  
+Response example (assuming user tier is Enterprise):  
+```
+{
+    "400px_thumbnail": "/media/1/images/test_ioN602N_400px_thumbnail.jpg",
+    "200px_thumbnail": "/media/1/images/test_ioN602N_200px_thumbnail.jpg",
+    "original_image": "/media/1/images/test_ioN602N.jpg",
+    "500s_expiring_link": "/media/expiring-images/test_ioN602N.jpg",
+    "success": "Image uploaded successfully"
+}
+```
 
 ### Getting all images
 `GET /images/`
 <br/>
 <br/>
-Only images added by the request user are available for him.
+Only images that were added by the request user are available for him.
 
 Response example:
 ```
@@ -91,38 +119,8 @@ Response example:
 
 <br/>
 
-### Uploading images
-`POST /images/`
-<br/>
-<br/>
-Uploading images require a `original_image` field to be included in the body.  As a value, it expects an image file in png or jpg format.  
-Any other values will be rejected.  
-#### Important note:
-If user's tier plan comes with ability to fetch expiring links, there shoud also be a `live_time` field in the body, 
-determining the amount of seconds the link will be available before it expires. Number range should be between `300` and `30000`.  
-  
-Request body example (assuming user tier is Enterprise):
-
-```
-{
-  "original_image": test.jpg,
-  "live_time": "500"
-}
-```
-Response differs depending on which tier user currently has.  
-Response example (assuming user tier is Enterprise):  
-```
-{
-    "400px_thumbnail": "/media/1/images/test_ioN602N_400px_thumbnail.jpg",
-    "200px_thumbnail": "/media/1/images/test_ioN602N_200px_thumbnail.jpg",
-    "original_image": "/media/1/images/test_ioN602N.jpg",
-    "500s_expiring_link": "/media/expiring-images/test_ioN602N.jpg",
-    "success": "Image uploaded successfully"
-}
-```
-
 ### Testing
-Because the API has no registration functionality, a testing admin user is created upon every container build, to allow accessing the django-admin panel.   
+A admin user for testing purposes is created upon every container build, to allow making requests and accessing the django-admin panel.   
 To access the account, use these credentials:  
 * <b>username</b>: admin  
 * <b>password</b>: admin  
