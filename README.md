@@ -31,9 +31,7 @@
 
 ## Endpoints
 
-In order to send valid requests, user needs to be authenticated. To achieve that, log in at <b>/users/login/</b> 
-(you can use <a href="testing">admin credentials</a> for that).  
-After you've done that, copy the <b>csrftoken</b> cookie from response headers and include that in your request headers as a value for <b>X-CSRFToken</b> field.
+In order to send valid requests, user needs to be authenticated. To achieve that, use the <a href="#login">login endpoint</a>.  
   
 ### Media access endponts
 
@@ -44,6 +42,25 @@ GET `media/<int:user_pk>/images/<str:file_name>`
 GET `media/expiring-images/<str:file_name>`
 
 <br/>
+
+### Authentication / Logging in
+<div id="login"></div>
+
+```
+POST /users/login/
+```
+To log in, you can use the built-in <a href="#testing">testing account</a>.  
+Request body example:
+
+```
+{
+  "username": "admin",
+  "password": "admin"
+}
+```
+
+After receiving response, copy the <b>csrftoken</b> cookie from response headers and include that in your request headers as a value for <b>X-CSRFToken</b> field.
+
 
 ### Getting all images
 `GET /images/`
@@ -104,7 +121,7 @@ Response example (assuming user tier is Enterprise):
 }
 ```
 
-### Testing user
+### Testing
 Because the API has no registration functionality, a testing admin user is created upon every container build, to allow accessing the django-admin panel.   
 To access the account, use these credentials:  
 * <b>username</b>: admin  
