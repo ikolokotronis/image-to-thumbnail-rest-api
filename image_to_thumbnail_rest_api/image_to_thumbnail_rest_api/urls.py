@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 
-from images.views import ExpiringImageView
+from images.views import ExpiringImageView, OpenImageView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,6 +28,11 @@ urlpatterns = [
         "media/expiring-images/<str:file_name>",
         ExpiringImageView.as_view(),
         name="expiring-image-view",
+    ),
+    path(
+        "media/<int:user_pk>/images/<str:file_name>",
+        OpenImageView.as_view(),
+        name="image-access",
     ),
 ]
 

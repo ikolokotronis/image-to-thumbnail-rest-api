@@ -46,7 +46,7 @@ class ImageView(APIView):
         """
         Calls the appropriate tier processing method and returns the response.
         """
-        user = User.objects.first()
+        user = request.user
         image_instance = Image(user=user)
         serializer = ImageSerializer(image_instance, data=request.data)
         if serializer.is_valid():
@@ -97,3 +97,58 @@ class ExpiringImageView(APIView):
             )
         file_path = os.path.join(os.path.dirname(image.image.path), file_name)
         return self.__open_image(file_path)
+
+
+
+class OpenImageView(APIView):
+    """
+    Image access management.
+    Only the owner of the image can access the image, if it exists.
+    """
+
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def __authorize_user(self, request: Request, user_pk: str) -> User | bool:
+        user = request.user
+        if user.pk == user_pk:
+            return user
+        return False
+
+    def __get_file_path(self, request: Request, file_name: str) -> str:
+        user = request.user
+        try:
+            image = Image.objects.get(original_image=f"{user.id}/images/{file_name}")
+            file_path = os.path.join(
+                os.path.dirname(image.original_image.path), file_name
+            )
+        except ObjectDoesNotExist:
+            file_path = self.__find_other_matching_file(request, file_name)
+        return file_path
+
+    def __find_other_matching_file(self, request: Request, file_name: str) -> str:
+        user = request.user
+        images_dir = os.listdir(os.path.join(f"{os.getcwd()}/media/{user.id}/images/"))
+        file_path = ""
+        for img_file in images_dir:
+            if img_file == file_name:
+                file_path = os.path.join(
+                    f"{os.getcwd()}/media/{user.id}/images/{img_file}"
+                )
+        return file_path
+
+    def __handle_open_file(self, file_path: str) -> HttpResponse | Response:
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                image_data = f.read()
+                return HttpResponse(image_data, content_type="image/jpeg")
+        return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request: Request, user_pk: str, file_name: str) -> Response:
+        if not self.__authorize_user(request, user_pk):
+            return Response(
+                {"error": "You do not have access to this image"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        file_path = self.__get_file_path(request, file_name)
+        return self.__handle_open_file(file_path)
